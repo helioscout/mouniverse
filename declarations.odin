@@ -21,3 +21,10 @@ Space :: struct {
 	world_id : b2.WorldId,
 	debug_drawer : b2.DebugDraw
 }
+
+Map :: struct {
+	id : u64,
+	width : f32,
+	height : f32,
+	label : string
+}
