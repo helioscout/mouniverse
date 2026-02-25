@@ -56,7 +56,11 @@ GameState :: struct {
 	screen : GameScreen,
 	actions : bit_set[Action; u64],
 	maps : map[u64]^Map,
-	map_id : u64
+	map_id : u64,
+	position : k2.Vec2,
+	fullscreen : bool,
+	zoom : f32,
+	scaled : time.Time
 }
 
 Player   :: distinct u8
@@ -83,7 +87,7 @@ Rotation :: struct {
 }
 
 Sprite :: struct {
-	texture : ^k2.Texture
+	texture : k2.Texture
 }
 
 Weapon :: struct {

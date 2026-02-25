@@ -1,6 +1,5 @@
 package mouniverse
 
-import b2 "vendor:box2d"
 import k2 "../../code/karl2d"
 import ecs "../moecs/odin/src"
 import "core:mem"
@@ -22,7 +21,7 @@ main :: proc() {
 		}
 	}
 
-	k2.init(DISPLAY_WIDTH, DISPLAY_HEIGHT, "mouniverse")
+	k2.init(DISPLAY_WIDTH, DISPLAY_HEIGHT, "mouniverse", { window_mode = .Windowed_Resizable })
 
 	ecs.init()
 
@@ -36,9 +35,8 @@ main :: proc() {
 	ecs.execute(world, "load-resources")
 
 	for k2.update() {
-		ecs.progress(world)
-		
 		k2.clear(k2.BLACK)
+		ecs.progress(world)
 		k2.present()
 	}
 
@@ -69,10 +67,17 @@ register :: proc(world: ^ecs.World) {
 }
 
 mount :: proc(world: ^ecs.World) {
-	ecs.mount(world, { phase = .START, callback = preapare })
-	ecs.mount(world, { phase = .START, callback = load_world })
-	ecs.mount(world, { components = { Actions }, tags = { Player }, callback = control })
-	ecs.mount(world, { components = { Position, Rotation, Sprite, Center, Size }, callback = draw })
-	ecs.mount(world, { name = "load-resources", phase = .MANUAL, callback = load_resources })
-	ecs.mount(world, { name = "destroy", phase = .MANUAL, callback = destroy })
+	ecs.mount(world, { callback = prepare,        phase = .START })
+	ecs.mount(world, { callback = load_world,     phase = .START })
+	ecs.mount(world, { callback = control,        components = { Actions }, tags = { Player } })
+	ecs.mount(world, { callback = global_control })
+	ecs.mount(world, { callback = actions,        components = { Handle, Actions, Weapon, Ship }, tags = { Player } })
+	ecs.mount(world, { callback = global_actions })
+	ecs.mount(world, { callback = physics })
+	ecs.mount(world, { callback = transformation, components = { Handle, Position, Rotation, Center } })
+	ecs.mount(world, { callback = camera })
+	ecs.mount(world, { callback = draw,           components = { Position, Rotation, Sprite, Center, Size } })
+	ecs.mount(world, { callback = debug })
+	ecs.mount(world, { callback = load_resources, name = "load-resources", phase = .MANUAL })
+	ecs.mount(world, { callback = destroy,        name = "destroy", phase = .MANUAL })
 }

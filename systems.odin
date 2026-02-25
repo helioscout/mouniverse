@@ -5,6 +5,7 @@ import k2 "../../code/karl2d"
 import ecs "../moecs/odin/src"
 import sqlite "../../code/odin-sqlite3"
 import str "core:strings"
+import "core:time"
 import "core:fmt"
 
 load_resources :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
@@ -41,15 +42,17 @@ load_resources :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 	}
 
 	ecs.set(world, GameState, &GameState {
-		screen = .Playing,	// TODO: Change to Menu when UI added.
-		maps = maps,
-		map_id = 10		// TODO: remove when UI added.
+		screen  = .Playing,	// TODO: Change to Menu when UI added.
+		maps    = maps,
+		map_id  = 10,		// TODO: remove when UI added.
+		zoom    = 1.0,
+		scaled  = time.now()
 	})
 
 	sqlite.close(db)
 }
 
-preapare :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+prepare :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 	debug_drawer := b2.DefaultDebugDraw()
 	debug_drawer.drawShapes = true
 	debug_drawer.DrawSegmentFcn = draw_segment
@@ -65,8 +68,7 @@ preapare :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 
 load_world :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 	state := ecs.get(world, GameState)
-	sprites := ecs.get_mut(world, Sprites)
-	space := ecs.get_mut(world, Space)
+	sprites, space := ecs.get_mut(world, Sprites, Space)
 
 	/* Recreate physics world. */
 	if b2.IS_NON_NULL(space.world_id) do b2.DestroyWorld(space.world_id)
@@ -99,7 +101,7 @@ load_world :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 		if row.asteroid do ecs.tag(entity, Asteroid)
 		if row.enemy    do ecs.tag(entity, Enemy)
 
-		texture, ok := &sprites.sprites[row.key]
+		texture, ok := sprites.sprites[row.key]
 
 		if !ok do continue
 
@@ -171,7 +173,7 @@ control :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 
 	if state.screen == .Playing {
 		for entity in entities {
-			actions := ecs.get(entity, Actions)
+			actions := ecs.get_mut(entity, Actions)
 			actions.actions = {}
 
 			if k2.key_went_down(.N1)      do actions.actions += { .UseOneBullet }
@@ -201,6 +203,131 @@ control :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 	}
 }
 
+global_control :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+	state := ecs.get_mut(world, GameState)
+	
+	state.actions = {}
+
+	if k2.key_is_held(.Left_Control) {
+		if k2.key_went_down(.F) {
+			if state.fullscreen do state.actions += { .FullscreenOff }
+			else do state.actions += { .FullscreenOn }
+		}
+	}
+}
+
+actions :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+	state := ecs.get_mut(world, GameState)
+
+	if state.screen == .Playing {
+		for entity in entities {
+			handle, actions, weapon, ship := ecs.get_mut(entity, Handle, Actions, Weapon, Ship)
+
+			action := actions.actions
+			body_id := handle.body_id
+			
+			mass: f32 = b2.Body_GetMass(body_id)
+			impulse: f32 = 3.90625 * mass
+			angular_impulse: f32 = 0.7510417 * mass
+
+			rotation     := b2.Body_GetRotation(body_id)
+			vec_left     := b2.RotateVector(rotation, { -impulse, 0.0 });
+			vec_right    := b2.RotateVector(rotation, { impulse, 0.0 });
+			vec_forward  := b2.RotateVector(rotation, { 0.0, -impulse });
+			vec_backward := b2.RotateVector(rotation, { 0.0, impulse });
+
+			if .UseOneBullet  in action do weapon.kind = .OneBullet
+			if .UseTwoBullets in action do weapon.kind = .TwoBullets
+			if .MoveLeft      in action do b2.Body_ApplyLinearImpulseToCenter(body_id, vec_left, true)
+			if .MoveRight     in action do b2.Body_ApplyLinearImpulseToCenter(body_id, vec_right, true)
+			if .MoveForward   in action do b2.Body_ApplyLinearImpulseToCenter(body_id, vec_forward, true)
+			if .MoveBackward  in action do b2.Body_ApplyLinearImpulseToCenter(body_id, vec_backward, true)
+			if .TurnLeft      in action do b2.Body_ApplyAngularImpulse(body_id, -angular_impulse, true)
+			if .TurnRight     in action do b2.Body_ApplyAngularImpulse(body_id, angular_impulse, true)
+			if .MinimizeSpeed in action do ship.speed = 0
+			if .MaximizeSpeed in action do ship.speed = 500
+
+			if .DecreaseSpeed in action && ship.speed > 0  do ship.speed -= 1
+			if .IncreaseSpeed in action && ship.speed < 50 do ship.speed += 1
+
+			if .ZoomIn in action && state.zoom < 2.0 && zoom_allowed(state.scaled) {
+				state.zoom += 0.1
+				state.scaled = time.now()
+			}
+
+			if .ZoomOut in action && state.zoom > 1.0 && zoom_allowed(state.scaled) {
+				state.zoom -= 0.1
+				state.scaled = time.now()
+			}
+
+			if .Brake in action {
+				linear_damping  := b2.Body_GetLinearDamping(body_id)
+				angular_damping := b2.Body_GetAngularDamping(body_id)
+		
+				if linear_damping < 100  do b2.Body_SetLinearDamping(body_id, linear_damping * 1.2 + 0.5)
+				if angular_damping < 100 do b2.Body_SetAngularDamping(body_id, angular_damping * 1.2 + 0.5)
+			} else {
+				vec_velocity     := b2.Body_GetLinearVelocity(body_id)
+				linear_velocity  := max(abs(vec_velocity.x), abs(vec_velocity.y))
+				angular_velocity := abs(b2.Body_GetAngularVelocity(body_id))
+				linear_factor:  f32 = linear_velocity >= 200.0 ? linear_velocity : 0.0
+				angular_factor: f32 = angular_velocity >= 10.0 ? angular_velocity : 0.0
+
+				b2.Body_SetLinearDamping(body_id, (50 + linear_factor - f32(ship.speed)) / 10.0)
+				b2.Body_SetAngularDamping(body_id, (50 + angular_factor - f32(ship.speed)) / 10.0)
+			}
+
+			ship.tracing = .MoveForward in action || .MoveBackward in action ||
+						   .MoveLeft in action || .MoveRight in action
+		}
+	}
+}
+
+global_actions :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+	state := ecs.get_mut(world, GameState)
+
+	if .FullscreenOn in state.actions {
+		k2.set_window_mode(.Borderless_Fullscreen)
+		state.fullscreen = true
+	}
+
+	if .FullscreenOff in state.actions {
+		k2.set_window_mode(.Windowed_Resizable)
+		state.fullscreen = false
+	}
+}
+
+physics :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+	state, space := ecs.get(world, GameState, Space)
+
+	if state.screen == .Playing {
+		b2.World_Step(space.world_id, TIME_STEP, SUB_STEP_COUNT)
+	}
+}
+
+transformation :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+	state := ecs.get_mut(world, GameState)
+
+	if state.screen == .Playing {
+		for entity in entities {
+			handle, pos, rot, center := ecs.get_mut(entity, Handle, Position, Rotation, Center)
+
+			if ecs.tagged(entity, Player) {
+				state.position = { pos.x + center.cx, pos.y + center.cy }
+			}
+		}
+	}
+}
+
+camera :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+	state := ecs.get(world, GameState)
+	
+	k2.set_camera(k2.Camera {
+		target = state.position,
+		offset = { f32(k2.get_screen_width()) / 2.0, f32(k2.get_screen_height()) / 2.0 },
+		zoom = state.zoom })
+}
+
 draw :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 	state := ecs.get(world, GameState)
 
@@ -209,15 +336,30 @@ draw :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 			pos, rot, sprite, center, size := ecs.get(entity, Position, Rotation, Sprite, Center, Size)
 
 			if rot.angle == 0.0 {
-				k2.draw_texture(sprite.texture^, { pos.x, pos.y })
+				k2.draw_texture(sprite.texture, { pos.x, pos.y })
+			} else {
+				k2.draw_texture_ex(
+					sprite.texture,
+					k2.get_texture_rect(sprite.texture),
+					{ x = pos.x + center.cx, y = pos.y + center.cy,
+					  w = f32(sprite.texture.width), h = f32(sprite.texture.height) },
+					{ center.cx, center.cy },
+					rot.angle)
 			}
 		}
 	}
 }
 
+debug :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+	state, space := ecs.get(world, GameState, Space)
+
+	if state.screen == .Playing {
+		b2.World_Draw(space.world_id, &space.debug_drawer)
+	}
+}
+
 destroy :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
-	sprites := ecs.get_mut(world, Sprites)
-	state := ecs.get_mut(world, GameState)
+	sprites, state := ecs.get_mut(world, Sprites, GameState)
 
 	for key, texture in sprites.sprites {
 		k2.destroy_texture(texture)
