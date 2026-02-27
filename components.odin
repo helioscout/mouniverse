@@ -87,7 +87,9 @@ Rotation :: struct {
 }
 
 Sprite :: struct {
-	texture : k2.Texture
+	texture : k2.Texture,
+	/* Rectangle on the texture to draw. */
+	rect    : Maybe(k2.Rect)
 }
 
 Weapon :: struct {
@@ -96,7 +98,7 @@ Weapon :: struct {
 }
 
 Trace :: struct {
-	tint : int
+	tint : u8
 }
 
 Ship :: struct {

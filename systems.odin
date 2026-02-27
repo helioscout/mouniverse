@@ -28,7 +28,8 @@ load_resources :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 		trace_thin   = k2.load_texture_from_file("./assets/trace-thin.png"),
 		trace_medium = k2.load_texture_from_file("./assets/trace-medium.png"),
 		trace_thick  = k2.load_texture_from_file("./assets/trace-thick.png"),
-		sprites = sprites
+		sprites      = sprites,
+		bullet_a     = { x = 13, y = 0, w = 2, h = 9 }
 	})
 
 	query, _ = sqlite.sql_bind(db, "select id, label, width, height from world")
@@ -133,7 +134,7 @@ load_world :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 		/* Creating entity physics body. */
 		body_def := b2.DefaultBodyDef()
 		body_def.userData = entity
-		body_def.type = b2.BodyType.dynamicBody
+		body_def.type = .dynamicBody
 		body_def.position = {
 			pixels_to_meters(f32(row.x) + cx),
 			pixels_to_meters(f32(row.y) + cy)
@@ -312,6 +313,13 @@ transformation :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 		for entity in entities {
 			handle, pos, rot, center := ecs.get_mut(entity, Handle, Position, Rotation, Center)
 
+			position := b2.Body_GetPosition(handle.body_id)
+			rotation := b2.Body_GetRotation(handle.body_id)
+
+			pos.x = meters_to_pixels(position.x) - center.cx
+			pos.y = meters_to_pixels(position.y) - center.cy
+			rot.angle = b2.Rot_GetAngle(rotation)
+			
 			if ecs.tagged(entity, Player) {
 				state.position = { pos.x + center.cx, pos.y + center.cy }
 			}
@@ -334,17 +342,148 @@ draw :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 	if state.screen == .Playing {
 		for entity in entities {
 			pos, rot, sprite, center, size := ecs.get(entity, Position, Rotation, Sprite, Center, Size)
+			rect, is_rect := sprite.rect.?
 
 			if rot.angle == 0.0 {
-				k2.draw_texture(sprite.texture, { pos.x, pos.y })
+				if is_rect do k2.draw_texture_rect(sprite.texture, rect, { pos.x, pos.y })
+				else do k2.draw_texture(sprite.texture, { pos.x, pos.y })
 			} else {
 				k2.draw_texture_ex(
 					sprite.texture,
-					k2.get_texture_rect(sprite.texture),
+					rect if is_rect else k2.get_texture_rect(sprite.texture),
 					{ x = pos.x + center.cx, y = pos.y + center.cy,
-					  w = f32(sprite.texture.width), h = f32(sprite.texture.height) },
+					  w = is_rect ? rect.w : f32(sprite.texture.width),
+					  h = is_rect ? rect.h : f32(sprite.texture.height) },
 					{ center.cx, center.cy },
 					rot.angle)
+			}
+		}
+	}
+}
+
+draw_ships :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+	state, sprites := ecs.get(world, GameState, Sprites)
+
+	if state.screen == .Playing {
+		for entity in entities {
+			pos, rot, center, size, ship := ecs.get_mut(entity, Position, Rotation, Center, Size, Ship)
+
+			if ship.tracing {
+				dh: f32 = 50.0 - f32(ship.speed)
+				width    := f32(sprites.trace_thin.width)
+				height   := f32(sprites.trace_thin.height) - dh
+				position := rotate_point(
+					pos.x + center.cx - width / 2.0,
+					pos.y + size.height,
+					pos.x + center.cx,
+					pos.y + center.cy,
+					rot.angle)
+
+				if ship.trace.tint < 255 do ship.trace.tint += 5
+
+				k2.draw_texture_ex(
+					sprites.trace_thin,
+					{ x = 0.0, y = dh, w = width, h = height },
+					{ x = position.x, y = position.y, w = width, h = height },
+					{ 0.0, 0.0 },
+					rot.angle,
+					{ 255 - ship.trace.tint, 255, 255, 255 }
+				)
+			} else {
+				ship.trace.tint = 0
+			}
+		}
+	}
+}
+
+shooting :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+	state, space, sprites := ecs.get(world, GameState, Space, Sprites)
+	texture := sprites.spritesheet
+
+	new_body :: proc(world_id: b2.WorldId, bullet: ^ecs.Entity, pos: [2]f32, rect: k2.Rect,
+		rot: ^Rotation) -> b2.BodyId {
+		width: f32 = rect.w
+		height: f32 = rect.h
+
+		body_def := b2.DefaultBodyDef()
+		body_def.userData = bullet
+		body_def.type = .dynamicBody
+		body_def.position = {
+			pixels_to_meters(pos.x + width / 2.0),
+			pixels_to_meters(pos.y + height / 2.0)
+		}
+		body_def.rotation = b2.MakeRot(rot.angle)
+		body_def.isBullet = true
+
+		body_id := b2.CreateBody(world_id, body_def)
+
+		dynamic_box := b2.MakeBox(pixels_to_meters(width) / 2.0, pixels_to_meters(height) / 2.0)
+		shape_def := b2.DefaultShapeDef()
+		shape_def.density = 1.0
+		shape_def.material.friction = 0.01
+		shape_def.filter.groupIndex = -1
+		shape_def.enableContactEvents = true
+
+		_ = b2.CreatePolygonShape(body_id, shape_def, dynamic_box)
+
+		b2.Body_ApplyLinearImpulseToCenter(
+			body_id,
+			b2.RotateVector(b2.MakeRot(to_radians(-90)), angle_to_vector(rot.angle, 20.0)),
+			true)
+
+		return body_id
+	}
+
+	new_bullet :: proc(world: ^ecs.World, world_id: b2.WorldId, pos: [2]f32, texture: k2.Texture,
+		rect: k2.Rect, rot: ^Rotation) {
+		bullet := ecs.spawn(world)
+
+		ecs.tag(bullet, Bullet)
+		ecs.add(bullet,
+			Position, &Position { x = pos.x, y = pos.y },
+			Size,     &Size     { width = rect.w, height = rect.h },
+			Center,   &Center   { cx = rect.w / 2.0, cy = rect.h / 2.0 },
+			Rotation, &Rotation { angle = rot.angle },
+			Sprite,   &Sprite   { texture = texture, rect = rect },
+			Handle,   &Handle   { body_id = new_body(world_id, bullet, pos, rect, rot) })
+	}
+
+	if state.screen == .Playing {
+		for entity in entities {
+			pos, center, rot, size, weapon, actions :=
+				ecs.get_mut(entity, Position, Center, Rotation, Size, Weapon, Actions)
+
+			if .Shoot in actions.actions {
+				width: f32 = sprites.bullet_a.w
+				height: f32 = sprites.bullet_a.h
+
+				switch weapon.kind {
+					case .OneBullet:
+						position: [2]f32 = {
+							pos.x + center.cx - width / 2.0,
+							pos.y - height
+						}
+
+						rotate_vec(&position, pos.x + center.cx, pos.y + center.cy, rot.angle)
+						new_bullet(world, space.world_id, position, texture, sprites.bullet_a, rot)
+
+					case .TwoBullets:
+						dx: f32 = size.width / 3.0
+						pos1: [2]f32 = {
+							pos.x + dx - width / 2.0,
+							pos.y - height
+						}
+						pos2: [2]f32 = {
+							pos.x + 2 * dx - width / 2.0,
+							pos.y - height
+						}
+
+						rotate_vec(&pos1, pos.x + center.cx, pos.y + center.cy, rot.angle)
+						rotate_vec(&pos2, pos.x + center.cx, pos.y + center.cy, rot.angle)
+
+						new_bullet(world, space.world_id, pos1, texture, sprites.bullet_a, rot)
+						new_bullet(world, space.world_id, pos2, texture, sprites.bullet_a, rot)
+				}
 			}
 		}
 	}
