@@ -2,6 +2,7 @@ package mouniverse
 
 import b2 "vendor:box2d"
 import k2 "../../code/karl2d"
+import ecs "../moecs/src"
 import "core:time"
 
 Action :: enum {
@@ -111,4 +112,14 @@ Ship :: struct {
 
 Handle :: struct {
 	body_id : b2.BodyId
+}
+
+Collision :: struct {
+	entity : ^ecs.Entity
+}
+
+Animation :: struct {
+	frame : int,			/* Current game loop frame since animation start. */
+	speed : int,			/* Game loop frames count per animation frame.    */
+	count : int				/* Animation frames count.						  */
 }

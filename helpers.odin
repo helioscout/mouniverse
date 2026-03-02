@@ -15,6 +15,10 @@ zoom_allowed :: #force_inline proc(zoom_time: time.Time) -> bool {
 	return time.duration_milliseconds(time.diff(zoom_time, time.now())) >= ZOOM_INTERVAL
 }
 
+shot_allowed :: #force_inline proc(shot_time: time.Time) -> bool {
+	return time.duration_milliseconds(time.diff(shot_time, time.now())) >= SHOT_INTERVAL
+}
+
 rotate_point :: #force_inline proc(x, y, cx, cy, angle: f32) -> [2]f32 {
 	return {
 		math.cos(angle) * (x - cx) - math.sin(angle) * (y - cy) + cx,

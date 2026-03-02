@@ -2,7 +2,7 @@ package mouniverse
 
 import b2 "vendor:box2d"
 import k2 "../../code/karl2d"
-import ecs "../moecs/odin/src"
+import ecs "../moecs/src"
 import sqlite "../../code/odin-sqlite3"
 import str "core:strings"
 import "core:time"
@@ -29,7 +29,10 @@ load_resources :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 		trace_medium = k2.load_texture_from_file("./assets/trace-medium.png"),
 		trace_thick  = k2.load_texture_from_file("./assets/trace-thick.png"),
 		sprites      = sprites,
-		bullet_a     = { x = 13, y = 0, w = 2, h = 9 }
+		bullet_a     = { x = 13, y = 0, w = 2, h = 9 },
+		spark        = { 0 = { x = 34, y = 0, w = 10, h = 8 },
+					     1 = { x = 45, y = 0, w = 7,  h = 8 },
+					     2 = { x = 54, y = 0, w = 9,  h = 8 } }
 	})
 
 	query, _ = sqlite.sql_bind(db, "select id, label, width, height from world")
@@ -122,7 +125,7 @@ load_world :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 		/* Ship with trace and weapon are specific only for player and enemy. */
 		if row.player || row.enemy {
 			ecs.add(entity,
-				Weapon, &Weapon { kind = .OneBullet },
+				Weapon, &Weapon { kind = .OneBullet, shot = time.now() },
 				Ship,   &Ship { speed = 50 })
 		}
 
@@ -303,6 +306,21 @@ physics :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 
 	if state.screen == .Playing {
 		b2.World_Step(space.world_id, TIME_STEP, SUB_STEP_COUNT)
+
+		events := b2.World_GetContactEvents(space.world_id)
+
+		for i in 0..<events.beginCount {
+			event := events.beginEvents[i]
+			body_id_a := b2.Shape_GetBody(event.shapeIdA)
+			body_id_b := b2.Shape_GetBody(event.shapeIdB)
+			entity_a := cast(^ecs.Entity)b2.Body_GetUserData(body_id_a)
+			entity_b := cast(^ecs.Entity)b2.Body_GetUserData(body_id_b)
+
+			if !ecs.deleted(entity_a) && !ecs.deleted(entity_b) {
+				ecs.add(entity_a, Collision, &Collision { entity = entity_b })
+				ecs.add(entity_b, Collision, &Collision { entity = entity_a })
+			}
+		}
 	}
 }
 
@@ -453,7 +471,7 @@ shooting :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 			pos, center, rot, size, weapon, actions :=
 				ecs.get_mut(entity, Position, Center, Rotation, Size, Weapon, Actions)
 
-			if .Shoot in actions.actions {
+			if .Shoot in actions.actions && shot_allowed(weapon.shot) {
 				width: f32 = sprites.bullet_a.w
 				height: f32 = sprites.bullet_a.h
 
@@ -461,7 +479,7 @@ shooting :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 					case .OneBullet:
 						position: [2]f32 = {
 							pos.x + center.cx - width / 2.0,
-							pos.y - height
+							pos.y - height - 1
 						}
 
 						rotate_vec(&position, pos.x + center.cx, pos.y + center.cy, rot.angle)
@@ -471,11 +489,11 @@ shooting :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 						dx: f32 = size.width / 3.0
 						pos1: [2]f32 = {
 							pos.x + dx - width / 2.0,
-							pos.y - height
+							pos.y - height - 1
 						}
 						pos2: [2]f32 = {
 							pos.x + 2 * dx - width / 2.0,
-							pos.y - height
+							pos.y - height - 1
 						}
 
 						rotate_vec(&pos1, pos.x + center.cx, pos.y + center.cy, rot.angle)
@@ -483,6 +501,57 @@ shooting :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 
 						new_bullet(world, space.world_id, pos1, texture, sprites.bullet_a, rot)
 						new_bullet(world, space.world_id, pos2, texture, sprites.bullet_a, rot)
+				}
+
+				weapon.shot = time.now()
+			}
+		}
+	}
+}
+
+collisions :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+	state := ecs.get(world, GameState)
+
+	if state.screen == .Playing {
+		for entity in entities {
+			collision, handle, pos, center := ecs.get(entity, Collision, Handle, Position, Center)
+			
+			if ecs.tagged(entity, Bullet) {
+				spark := ecs.spawn(world)
+
+				ecs.tag(spark, Spark)
+				ecs.add(spark,
+					Position,  &Position  { x = pos.x + center.cx, y = pos.y + center.cy },
+					Animation, &Animation { frame = 0, speed = 2, count = 3 })
+				
+				b2.DestroyBody(handle.body_id)
+				ecs.despawn(world, entity)
+				ecs.remove(collision.entity, Collision)
+			}
+		}
+	}
+}
+
+effects :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+	state, sprites := ecs.get(world, GameState, Sprites)
+
+	if state.screen == .Playing {
+		for entity in entities {
+			pos, animation := ecs.get_mut(entity, Position, Animation)
+
+			if ecs.tagged(entity, Spark) {
+				animation.frame += 1
+
+				if animation.frame == animation.count * animation.speed {
+					ecs.despawn(world, entity)
+				} else {
+					idx := animation.frame / animation.speed
+					rect := sprites.spark[idx]
+					
+					k2.draw_texture_rect(
+						sprites.spritesheet,
+						rect,
+						{ pos.x - rect.w / 2.0, pos.y - rect.h / 2.0 })
 				}
 			}
 		}

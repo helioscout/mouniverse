@@ -1,7 +1,7 @@
 package mouniverse
 
 import k2 "../../code/karl2d"
-import ecs "../moecs/odin/src"
+import ecs "../moecs/src"
 import "core:mem"
 import "core:fmt"
 
@@ -56,6 +56,8 @@ register :: proc(world: ^ecs.World) {
 	ecs.register(world, .COMPONENT, Weapon)
 	ecs.register(world, .COMPONENT, Ship)
 	ecs.register(world, .COMPONENT, Handle)
+	ecs.register(world, .COMPONENT, Collision)
+	ecs.register(world, .COMPONENT, Animation)
 	ecs.register(world, .RESOURCE, Sprites)
 	ecs.register(world, .RESOURCE, GameState)
 	ecs.register(world, .RESOURCE, Space)
@@ -79,6 +81,8 @@ mount :: proc(world: ^ecs.World) {
 	ecs.mount(world, { callback = draw,           components = { Position, Rotation, Sprite, Center, Size } })
 	ecs.mount(world, { callback = draw_ships,     components = { Position, Rotation, Center, Size, Ship } })
 	ecs.mount(world, { callback = shooting,       components = { Position, Center, Rotation, Size, Weapon, Actions } })
+	ecs.mount(world, { callback = collisions,     components = { Collision, Handle, Position, Center } })
+	ecs.mount(world, { callback = effects,        components = { Position, Animation } })
 	ecs.mount(world, { callback = debug })
 	ecs.mount(world, { callback = load_resources, name = "load-resources", phase = .MANUAL })
 	ecs.mount(world, { callback = destroy,        name = "destroy", phase = .MANUAL })

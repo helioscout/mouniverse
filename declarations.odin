@@ -23,7 +23,8 @@ Sprites :: struct {
 	trace_thick  : k2.Texture,
 	spritesheet  : k2.Texture,
 	/* Bullet rectangle in spritesheet. */
-	bullet_a     : k2.Rect
+	bullet_a     : k2.Rect,
+	spark        : [3]k2.Rect
 }
 
 Space :: struct {
