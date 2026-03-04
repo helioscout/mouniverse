@@ -558,6 +558,28 @@ effects :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 	}
 }
 
+cleaning :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
+	state := ecs.get(world, GameState)
+
+	if state.screen == .Playing {
+		width, height := f32(k2.get_screen_width()), f32(k2.get_screen_height())
+		rect: k2.Rect = { x = state.position.x - width / 2.0,
+						  y = state.position.y - height / 2.0,
+						  w = width,
+						  h = height }
+			
+		for entity in entities {
+			pos, size, handle := ecs.get(entity, Position, Size, Handle)
+			
+			/* Destroy bullets that are outside of the screen. */
+			if is_outside_of_rect(pos, size, rect) {
+				b2.DestroyBody(handle.body_id)
+				ecs.despawn(world, entity)
+			}
+		}
+	}
+}
+
 debug :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 	state, space := ecs.get(world, GameState, Space)
 

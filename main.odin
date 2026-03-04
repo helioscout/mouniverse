@@ -83,6 +83,7 @@ mount :: proc(world: ^ecs.World) {
 	ecs.mount(world, { callback = shooting,       components = { Position, Center, Rotation, Size, Weapon, Actions } })
 	ecs.mount(world, { callback = collisions,     components = { Collision, Handle, Position, Center } })
 	ecs.mount(world, { callback = effects,        components = { Position, Animation } })
+	ecs.mount(world, { callback = cleaning,       components = { Position, Size, Handle }, tags = { Bullet } })
 	ecs.mount(world, { callback = debug })
 	ecs.mount(world, { callback = load_resources, name = "load-resources", phase = .MANUAL })
 	ecs.mount(world, { callback = destroy,        name = "destroy", phase = .MANUAL })

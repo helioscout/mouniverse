@@ -2,6 +2,7 @@ package mouniverse
 
 import "core:time"
 import "core:math"
+import k2 "../../code/karl2d"
 
 pixels_to_meters :: #force_inline proc(pixels: f32) -> f32 {
 	return pixels * SCALING_FACTOR
@@ -42,4 +43,11 @@ angle_to_vector :: #force_inline proc(angle, scale: f32) -> [2]f32 {
 		math.cos(angle) * scale,
 		math.sin(angle) * scale
 	}
+}
+
+is_outside_of_rect :: proc(pos: Position, size: Size, rect: k2.Rect) -> bool {
+	return pos.x + size.width < rect.x  ||
+		   pos.x > rect.x + rect.w      ||
+		   pos.y + size.height < rect.y ||
+		   pos.y > rect.y + rect.h
 }
