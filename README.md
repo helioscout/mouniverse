@@ -26,8 +26,7 @@ You don't have to compile the game to run it, all the necessary release files (f
 ~ Impulses (for moving) calculates depending on ship mass.\
 ~ Bullet/asteroid contact (collision) animation.\
 \
-**Control keys:**\
-\
+**Control keys:**
 | Key      | Description                   |
 |----------|-------------------------------|
 | 1        | Change weapon to one bullet.  |
