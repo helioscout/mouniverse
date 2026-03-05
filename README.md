@@ -11,8 +11,8 @@ You don't have to compile the game to run it, all the necessary release files (f
 **I am using next tools:**\
 \
 ~ [Odin](https://odin-lang.org/): programming language;\
-~ [box2d](https://github.com/erincatto/box2d): for game physics (Odin's vendor lib);\
 ~ [karl2d](https://github.com/karl-zylinski/karl2d): for graphics and user events;\
+~ [box2d](https://github.com/erincatto/box2d): for game physics (Odin's vendor lib);\
 ~ [moecs](https://sr.ht/~modevstudio/moecs/): entity component system;\
 ~ [kenney](http://kenney.nl): for assets;\
 \
@@ -46,7 +46,7 @@ You don't have to compile the game to run it, all the necessary release files (f
 | Ctrl+I   | Zoom in.                      |
 | Ctrl+O   | Zoom out.                     |
 | Ctrl+F   | Full-screen on/off.           |
-| Esc      | Show menu (game pause) or back to game (Currently unavailable, I will add UI later). |
+| Esc      | Show menu (game pause) or back to game (currently unavailable, I will add UI later). |
 \
 **Related projects:**\
 \
