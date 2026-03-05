@@ -28,24 +28,26 @@ You don't have to compile the game to run it, all the necessary release files (f
 \
 **Control keys:**\
 \
-~ 1 &emsp;&emsp;- Change weapon to one bullet.\
-~ 2 &emsp;&emsp;- Change weapon to two bullets.\
-~ A &emsp;&emsp;- Move left.\
-~ D &emsp;&emsp;- Move right.\
-~ Up &emsp;&emsp;- Move forward.\
-~ Down &emsp;- Move backward.\
-~ Left &emsp;- Turn left.\
-~ Right &emsp;- Turn right.\
-~ Minus &emsp;- Minimize speed.\
-~ Plus(=) &emsp;- Maximize speed.\
-~ Q &emsp;&emsp;- Decrease speed (slowly).\
-~ E &emsp;&emsp;- Increase speed (slowly).\
-~ Space &emsp;- Brake (extreme).\
-~ W &emsp;&emsp;- Shoot.\
-~ Ctrl+I &emsp;- Zoom in.\
-~ Ctrl+O &emsp;- Zoom out.\
-~ Ctrl+F &emsp;- Full-screen on/off.\
-~ Esc &emsp;- Show menu (game pause) or back to game (Currently unavailable, I will add UI later).\
+| Key      | Description                   |
+|----------|-------------------------------|
+| 1        | Change weapon to one bullet.  |
+| 2        | Change weapon to two bullets. |
+| A        | Move left.                    |
+| D        | Move right.                   |
+| Up       | Move forward.                 |
+| Down     | Move backward.                |
+| Left     | Turn left.                    |
+| Right    | Turn right.                   |
+| Minus    | Minimize speed.               |
+| Plus(=)  | Maximize speed.               |
+| Q        | Decrease speed (slowly).      |
+| E        | Increase speed (slowly).      |
+| Space    | Brake (extreme).              |
+| W        | Shoot.                        |
+| Ctrl+I   | Zoom in.                      |
+| Ctrl+O   | Zoom out.                     |
+| Ctrl+F   | Full-screen on/off.           |
+| Esc      | Show menu (game pause) or back to game (Currently unavailable, I will add UI later). |
 \
 **Related projects:**\
 \
