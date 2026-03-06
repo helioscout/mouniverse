@@ -10,7 +10,7 @@ You don't have to compile the game to run it, all the necessary release files (f
 \
 **I am using next tools:**\
 \
-~ [Odin](https://odin-lang.org/): programming language;\
+~ [Odin](https://github.com/odin-lang/Odin): programming language;\
 ~ [karl2d](https://github.com/karl-zylinski/karl2d): for graphics and user events;\
 ~ [box2d](https://github.com/erincatto/box2d): for game physics (Odin's vendor lib);\
 ~ [moecs](https://sr.ht/~modevstudio/moecs/): entity component system;\
