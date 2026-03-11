@@ -3,7 +3,7 @@ package mouniverse
 import "core:c"
 import "base:runtime"
 import b2 "vendor:box2d"
-import k2 "../../code/karl2d"
+import k2 "../karl2d"
 
 draw_segment :: proc "c" (p1, p2: b2.Vec2, color: b2.HexColor, ctx: rawptr) {
 	context = runtime.default_context()

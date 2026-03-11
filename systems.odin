@@ -1,9 +1,9 @@
 package mouniverse
 
 import b2 "vendor:box2d"
-import k2 "../../code/karl2d"
+import k2 "../karl2d"
 import ecs "../moecs/src"
-import sqlite "../../code/odin-sqlite3"
+import sqlite "../odin-sqlite3"
 import str "core:strings"
 import "core:time"
 import "core:fmt"

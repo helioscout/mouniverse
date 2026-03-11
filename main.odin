@@ -1,6 +1,6 @@
 package mouniverse
 
-import k2 "../../code/karl2d"
+import k2 "../karl2d"
 import ecs "../moecs/src"
 import "core:mem"
 import "core:fmt"

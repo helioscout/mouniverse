@@ -1,7 +1,7 @@
 package mouniverse
 
 import b2 "vendor:box2d"
-import k2 "../../code/karl2d"
+import k2 "../karl2d"
 import "core:time"
 
 DISPLAY_WIDTH 	 : int : 800

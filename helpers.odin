@@ -2,7 +2,7 @@ package mouniverse
 
 import "core:time"
 import "core:math"
-import k2 "../../code/karl2d"
+import k2 "../karl2d"
 
 pixels_to_meters :: #force_inline proc(pixels: f32) -> f32 {
 	return pixels * SCALING_FACTOR
