@@ -25,7 +25,7 @@ odin build . -out:mouniverse.exe -o:aggressive
 ```
 4. Run executable (dependent on your operation system).
 
-### I am using next tools:
+### I am using next tools
 | Tool                                      | Purpose                                                           |
 |-------------------------------------------|-------------------------------------------------------------------|
 | [Odin](https://github.com/odin-lang/Odin) | Programming language.                                             |
