@@ -7,7 +7,7 @@ Feel free to use it as template for your own things.\
 Space worlds (game maps) with entities for this game you can create and edit with [moeditor](https://git.sr.ht/~modevstudio/moeditor) project. There you will find also description of the game storage (SQLite database) structure.
 
 ### Setup
-If you use Windows and want just to play, you don't have to compile the game to run it, all the necessary release files are located in the folder **bin**. Just ensure that `assets` folder located in the same directory with executable (copy if necessary).\
+If you want just to play, you don't have to compile the game to run it, all the necessary release files are located in the folder **bin** (check for your os). Just ensure that `assets` folder located in the same directory with executable (copy if necessary).\
 \
 To build from source:
 1. Setup [Odin](https://odin-lang.org/docs/install/) programming language.
