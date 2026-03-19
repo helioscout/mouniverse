@@ -4,7 +4,7 @@ Feel free to use it as template for your own things.\
 \
 ![Screenshot](pics/screen.png)\
 \
-Space worlds (game maps) with entities for this game you can create and edit with [moeditor](https://github.com/moscout/moeditor) project. There you will find also description of the game storage (SQLite database) structure.
+Space worlds (game maps) with entities for this game you can create and edit with [moeditor](https://sr.ht/~helioscout/moeditor) project. There you will find also description of the game storage (SQLite database) structure.
 
 ### Setup
 If you want just to play, you don't have to compile the game to run it, all the necessary release files are located in the folder **bin** (check for your os). Just ensure that `assets` folder located in the same directory with executable (copy if necessary).\
@@ -15,8 +15,8 @@ To build from source:
 ```sh
 git clone https://github.com/karl-zylinski/karl2d.git
 git clone https://github.com/flysand7/odin-sqlite3.git
-git clone https://github.com/moscout/moecs.git
-git clone https://github.com/moscout/mouniverse.git
+git clone https://git.sr.ht/~helioscout/moecs
+git clone https://git.sr.ht/~helioscout/mouniverse
 ```
 3. Go to game folder and compile:
 ```sh
@@ -31,7 +31,7 @@ odin build . -out:mouniverse.exe -o:aggressive
 | [Odin](https://github.com/odin-lang/Odin) | Programming language.                                             |
 | [karl2d](https://github.com/karl-zylinski/karl2d) | For graphics and user events.                             |
 | [box2d](https://github.com/erincatto/box2d) | For game physics (Odin's vendor lib).                           |
-| [moecs](https://github.com/moscout/moecs/) | Entity component system.                                         |
+| [moecs](https://sr.ht/~helioscout/moecs/) | Entity component system.                                         |
 | [sqlite3](https://github.com/flysand7/odin-sqlite3) | SQLite3 bindings for reading/writing to database.       |
 | [kenney](http://kenney.nl)                | Awesome free assets.                                              |
 
@@ -70,5 +70,5 @@ odin build . -out:mouniverse.exe -o:aggressive
 ### Related projects
 | Project                                             | Description                                             |
 |-----------------------------------------------------|---------------------------------------------------------|
-| [moeditor](https://github.com/moscout/moeditor) | Worlds editor for space game.                           |
-| [moecs](https://github.com/moscout/moecs)       | Entity component system.                                |
+| [moeditor](https://sr.ht/~helioscout/moeditor) | Worlds editor for space game.                           |
+| [moecs](https://sr.ht/~helioscout/moecs)       | Entity component system.                                |
