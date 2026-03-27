@@ -126,7 +126,7 @@ load_world :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 		if row.player || row.enemy {
 			ecs.add(entity,
 				Weapon, &Weapon { kind = .OneBullet, shot = time.now() },
-				Ship,   &Ship { speed = 50 })
+				Ship,   &Ship { speed = 0 })
 		}
 
 		/* Actions is specific only for player. */
@@ -249,7 +249,7 @@ actions :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 			if .TurnLeft      in action do b2.Body_ApplyAngularImpulse(body_id, -angular_impulse, true)
 			if .TurnRight     in action do b2.Body_ApplyAngularImpulse(body_id, angular_impulse, true)
 			if .MinimizeSpeed in action do ship.speed = 0
-			if .MaximizeSpeed in action do ship.speed = 500
+			if .MaximizeSpeed in action do ship.speed = 50
 
 			if .DecreaseSpeed in action && ship.speed > 0  do ship.speed -= 1
 			if .IncreaseSpeed in action && ship.speed < 50 do ship.speed += 1
