@@ -72,3 +72,6 @@ odin build . -out:mouniverse.exe -o:aggressive
 |-----------------------------------------------------|---------------------------------------------------------|
 | [moeditor](https://github.com/helioscout/moeditor)  | Worlds editor for space game.                           |
 | [moecs](https://github.com/helioscout/moecs)        | Entity component system.                                |
+
+[![Support](https://img.shields.io/liberapay/patrons/modev.svg?logo=liberapay)](https://liberapay.com/modev)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-orange?logo=buy-me-a-coffee)](https://buymeacoffee.com/helioscout)
