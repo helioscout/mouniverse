@@ -75,3 +75,4 @@ odin build . -out:mouniverse.exe -o:aggressive
 
 [![Support](https://img.shields.io/liberapay/patrons/modev.svg?logo=liberapay)](https://liberapay.com/modev)
 [![Buy me a coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-orange?logo=buy-me-a-coffee)](https://buymeacoffee.com/helioscout)
+[![ko-fi](https://img.shields.io/badge/Quick%20Tip-72a4f2?logo=ko-fi)](https://ko-fi.com/helioscout)
