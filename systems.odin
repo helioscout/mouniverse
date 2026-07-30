@@ -156,7 +156,7 @@ load_world :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 		shape_def.material.friction = 0.1
 		shape_def.enableContactEvents = true
 
-		_ = b2.CreatePolygonShape(body_id, shape_def, dynamic_box)
+		_ = b2.CreatePolygonShape(body_id, shape_def, &dynamic_box)
 
 		/* Setting mass for asteroid depending on it's size. */
 		if row.asteroid {
@@ -366,7 +366,7 @@ draw :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 				if is_rect do k2.draw_texture_rect(sprite.texture, rect, { pos.x, pos.y })
 				else do k2.draw_texture(sprite.texture, { pos.x, pos.y })
 			} else {
-				k2.draw_texture_ex(
+				k2.draw_texture_fit(
 					sprite.texture,
 					rect if is_rect else k2.get_texture_rect(sprite.texture),
 					{ x = pos.x + center.cx, y = pos.y + center.cy,
@@ -399,7 +399,7 @@ draw_ships :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 
 				if ship.trace.tint < 255 do ship.trace.tint += 5
 
-				k2.draw_texture_ex(
+				k2.draw_texture_fit(
 					sprites.trace_thin,
 					{ x = 0.0, y = dh, w = width, h = height },
 					{ x = position.x, y = position.y, w = width, h = height },
@@ -442,7 +442,7 @@ shooting :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 		shape_def.filter.groupIndex = -1
 		shape_def.enableContactEvents = true
 
-		_ = b2.CreatePolygonShape(body_id, shape_def, dynamic_box)
+		_ = b2.CreatePolygonShape(body_id, shape_def, &dynamic_box)
 
 		b2.Body_ApplyLinearImpulseToCenter(
 			body_id,
