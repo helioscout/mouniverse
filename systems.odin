@@ -99,7 +99,7 @@ load_world :: proc(entities: ^[dynamic]^ecs.Entity, world: ^ecs.World) {
 
 	for row in sqlite.sql_row(db, query, struct { x: int, y: int, angle: f32, key: string, tag_id: u64,
 												  player: bool, asteroid: bool, enemy: bool }) {
-		entity := ecs.spawn(world, row.asteroid ? .STATIC : .DYNAMIC)
+		entity := ecs.spawn(world)
 
 		if row.player   do ecs.tag(entity, Player)
 		if row.asteroid do ecs.tag(entity, Asteroid)

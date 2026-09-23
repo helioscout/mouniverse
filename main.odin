@@ -25,7 +25,7 @@ main :: proc() {
 
 	ecs.init()
 
-	world: ^ecs.World = ecs.new_world()
+	world: ^ecs.World = ecs.world()
 
 	register(world)
 	ecs.run(world)
